@@ -166,7 +166,7 @@ void *_timer_thread(void *data)
                 tmp = _get_timer_from_fd(ufds[i].fd);
 
                 if (tmp && tmp->callback)
-                    tmp->callback((size_t)tmp, tmp->user_data);
+                    tmp->callback();
             }
         }
     }
@@ -188,22 +188,4 @@ void time_handler3(size_t timer_id, void *user_data)
 {
     printf("2000 ms timer expired. (%d)\n", timer_id);
 }
-using namespace std;
 
-int main()
-{
-    size_t timer1, timer2, timer3;
-   // printf("merooooooooooo");
-    initialize();
-
-    timer1 = start_timer(200, time_handler1, TIMER_SINGLE_SHOT, NULL);
-    //timer2 = start_timer(100, time_handler2, TIMER_PERIODIC, NULL);
-    //timer3 = start_timer(2000, time_handler3, TIMER_PERIODIC, NULL);
-    sleep(6);
-    stop_timer(timer1);
-    //stop_timer(timer2);
-    //stop_timer(timer3);
-
-    finalize();
-    return 0;
-}

@@ -23,12 +23,8 @@
 
 #define MAX_PKT 8 /* determines packet size in bytes */
 #define PORT 9002
-#define MAX_SEQ 7
-typedef enum
-{
-    false,
-    true
-} boolean;                   /* boolean type */
+#define MAX_SEQ 8
+
 typedef unsigned int seq_nr; /* sequence or ack numbers */
 
 typedef struct
@@ -57,6 +53,22 @@ typedef enum
     timeout,
     network_layer_ready
 } event_type;
+
+typedef enum
+{
+    notset,
+    started,
+    stopped,
+    timerout
+} timer_status;
+
+typedef struct
+{
+    seq_nr timeriD;
+    seq_nr frameID;
+    timer_status timerCurrentStatus = notset;
+} newtwork_timer;
+
 /* Wait for an event to happen; return its type in event. */
 void wait_for_event(event_type *event);
 
@@ -72,8 +84,6 @@ void from_physical_layer(frame *r);
 /* Pass the frame to the physical layer for transmission. */
 void to_physical_layer(frame *s);
 
-/* Start the clock running and enable the timeout event.*/
-void start_timer(seq_nr k);
 
 /* Stop the clock and disable the timeout event.*/
 void stop_timer(seq_nr k);
@@ -96,5 +106,3 @@ void disable_network_layer(void);
         k = k + 1;   \
     else             \
         k = 0
-
-

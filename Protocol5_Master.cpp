@@ -146,12 +146,12 @@ void protocol5(void)
     seq_nr nbuffered;                                                      /* number of output buffers currently in use */
     seq_nr i;                                                              /* used to index into the buffer array */
     event_type event;
-    //enable_network_layer(); /* allow network layer ready events */
+    enable_network_layer(); /* allow network layer ready events */
     ack_expected = 0;       /* next ack expected inbound */
     next_frame_to_send = 0; /* next frame going out */
     frame_expected = 0;     /* number of frame expected inbound */
     nbuffered = 0;          /* initially no packets are buffered */
-    Connect_Slave();
+    Connect_Master();
     while (1)
     {
         wait_for_event(&event); /* four possibilities: see event type above */
@@ -170,7 +170,7 @@ void protocol5(void)
             if (r.seq == frame_expected)
             {
                 /* Frames are accepted only in order. */
-                /****/sleep(3);
+                /***/sleep(3);
                 to_network_layer(&r.info); /* pass packet to network layer */
                 inc(frame_expected);       /* advance lower edge of receiver’s window */
             }
@@ -214,7 +214,7 @@ int main()
     NetworkLayer_Buffer[0] = {1, 2, 3, 4, 5, 6, 7, 8};
     NetworkLayer_Buffer[1] = {15, 25, 36, 96, 17, 26, 69, 6};
     NetworkLayer_Buffer[2] = {96, 63, 25, 45, 89, 20, 26, 78};
-    NetworkLayer_Buffer[3] = { 9, 6, 4, 6 ,7, 12, 34, 74};
+    NetworkLayer_Buffer[3] = { 9, 6, 4, 6, 7, 12, 34, 74};
     NetworkLayer_Buffer[4] = { 10, 15, 12, 13, 14, 25, 87, 71};
     NetworkLayer_Buffer[5] = { 1, 6, 9, 7, 8, 15, 17, 30};
     NetworkLayer_Buffer[6] = { 14, 14, 24, 56, 47, 36, 89, 31};
