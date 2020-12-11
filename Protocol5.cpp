@@ -11,7 +11,6 @@ unsigned int server_socket;
 /* Ids of timers */
 size_t timers[MAX_SEQ] = {0};
 
-
 /* Handler of timer */
 void Set_Timer_Out(size_t timer_id, void *user_data)
 {
@@ -82,7 +81,7 @@ void from_physical_layer(frame *r)
     printf("From physical layer \n");
     printf("seq = %d    ack = %d\n", r->seq, r->ack);
     printf("info is : ");
-    for(int i = 0; i< 8; i++)
+    for (int i = 0; i < 8; i++)
     {
         printf("%d  ", r->info.data[i]);
     }
@@ -96,13 +95,12 @@ void to_physical_layer(frame *s)
     printf("To physical layer \n");
     printf("seq = %d    ack = %d\n", s->seq, s->ack);
     printf("info is : ");
-    for(int i = 0; i< 8; i++)
+    for (int i = 0; i < 8; i++)
     {
         printf("%d  ", s->info.data[i]);
     }
     printf("\n");
 }
-
 
 /*Start an auxiliary timer and enable the ack timeout event.*/
 //void start_ack_timer(void);
@@ -131,12 +129,12 @@ static bool between(seq_nr a, seq_nr b, seq_nr c)
 static void send_data(seq_nr frame_nr, seq_nr frame_expected, packet buffer[])
 {
     /* Construct and send a data frame. */
-    frame s;                                            /* scratch variable */
-    s.info = buffer[frame_nr];                          /* insert packet into frame */
-    s.seq = frame_nr;                                   /* insert sequence number into frame */
-    s.ack = (frame_expected + MAX_SEQ) % (MAX_SEQ + 1); /* piggyback ack */
-    to_physical_layer(&s);                              /* transmit the frame */
-    timers[frame_nr] = start_timer(2000, Set_Timer_Out, TIMER_SINGLE_SHOT, NULL);         /* start the timer running */
+    frame s;                                                                      /* scratch variable */
+    s.info = buffer[frame_nr];                                                    /* insert packet into frame */
+    s.seq = frame_nr;                                                             /* insert sequence number into frame */
+    s.ack = (frame_expected + MAX_SEQ) % (MAX_SEQ + 1);                           /* piggyback ack */
+    to_physical_layer(&s);                                                        /* transmit the frame */
+    timers[frame_nr] = start_timer(2000, Set_Timer_Out, TIMER_SINGLE_SHOT, NULL); /* start the timer running */
 }
 void protocol5(void)
 {
@@ -164,7 +162,7 @@ void protocol5(void)
             nbuffered = nbuffered + 1;                             /* expand the sender’s window */
             send_data(next_frame_to_send, frame_expected, buffer); /* transmit the frame */
             inc(next_frame_to_send);                               /* advance sender’s upper window edge */
-            /****/disable_network_layer();
+            /****/ disable_network_layer();
             break;
         case frame_arrival:          /* a data or control frame has arrived */
             from_physical_layer(&r); /* get incoming frame from physical layer */
@@ -179,12 +177,12 @@ void protocol5(void)
             {
                 /* Handle piggybacked ack. */
                 nbuffered = nbuffered - 1; /* one frame fewer buffered */
-                /****/TimeOutFlag = 0;
-                stop_timer(timers[ack_expected]);  /* frame arrived intact; stop timer */
-                inc(ack_expected);         /* contract sender’s window */
+                /****/ TimeOutFlag = 0;
+                stop_timer(timers[ack_expected]); /* frame arrived intact; stop timer */
+                inc(ack_expected);                /* contract sender’s window */
             }
             /****/
-            if(TimeOutFlag != 1)
+            if (TimeOutFlag != 1)
                 enable_network_layer();
             /****/
             break;
@@ -211,14 +209,15 @@ int main()
         for (int j = 0; j < 8; j++)
             NetworkLayer_Buffer[i].data[j] = j + 1;
     */
+    initialize();
     NetworkLayer_Buffer[0] = {1, 2, 3, 4, 5, 6, 7, 8};
     NetworkLayer_Buffer[1] = {15, 25, 36, 96, 17, 26, 69, 6};
     NetworkLayer_Buffer[2] = {96, 63, 25, 45, 89, 20, 26, 78};
-    NetworkLayer_Buffer[3] = { 9, 6, 4, 6 ,7, 12, 34, 74};
-    NetworkLayer_Buffer[4] = { 10, 15, 12, 13, 14, 25, 87, 71};
-    NetworkLayer_Buffer[5] = { 1, 6, 9, 7, 8, 15, 17, 30};
-    NetworkLayer_Buffer[6] = { 14, 14, 24, 56, 47, 36, 89, 31};
-    NetworkLayer_Buffer[7] = { 20, 21, 24, 29, 26, 74, 73, 97};
+    NetworkLayer_Buffer[3] = {9, 6, 4, 6, 7, 12, 34, 74};
+    NetworkLayer_Buffer[4] = {10, 15, 12, 13, 14, 25, 87, 71};
+    NetworkLayer_Buffer[5] = {1, 6, 9, 7, 8, 15, 17, 30};
+    NetworkLayer_Buffer[6] = {14, 14, 24, 56, 47, 36, 89, 31};
+    NetworkLayer_Buffer[7] = {20, 21, 24, 29, 26, 74, 73, 97};
     protocol5();
 
     return 0;
