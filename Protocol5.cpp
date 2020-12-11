@@ -13,7 +13,7 @@ size_t timers[MAX_SEQ] = {0};
 
 
 /* Handler of timer */
-void Set_Timer_Out(void)
+void Set_Timer_Out(size_t timer_id, void *user_data)
 {
     TimeOutFlag = 1;
 }
@@ -91,6 +91,7 @@ void from_physical_layer(frame *r)
 /* Pass the frame to the physical_layer for transmission. */
 void to_physical_layer(frame *s)
 {
+    sleep(5);
     write(client_socket, s, sizeof(frame));
     printf("To physical layer \n");
     printf("seq = %d    ack = %d\n", s->seq, s->ack);
@@ -170,7 +171,6 @@ void protocol5(void)
             if (r.seq == frame_expected)
             {
                 /* Frames are accepted only in order. */
-                /****/sleep(3);
                 to_network_layer(&r.info); /* pass packet to network layer */
                 inc(frame_expected);       /* advance lower edge of receiver’s window */
             }

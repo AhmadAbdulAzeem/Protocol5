@@ -166,7 +166,7 @@ void *_timer_thread(void *data)
                 tmp = _get_timer_from_fd(ufds[i].fd);
 
                 if (tmp && tmp->callback)
-                    tmp->callback();
+                    tmp->callback((size_t)tmp, tmp->user_data );
             }
         }
     }

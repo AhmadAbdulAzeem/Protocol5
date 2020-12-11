@@ -13,8 +13,9 @@ size_t timers[MAX_SEQ] = {0};
 
 
 /* Handler of timer */
-void Set_Timer_Out(void)
+void Set_Timer_Out(size_t timer_id, void *user_data)
 {
+    printf("/******************************TimeOut**************************************/\n");
     TimeOutFlag = 1;
 }
 
@@ -136,9 +137,11 @@ static void send_data(seq_nr frame_nr, seq_nr frame_expected, packet buffer[])
     s.ack = (frame_expected + MAX_SEQ) % (MAX_SEQ + 1); /* piggyback ack */
     to_physical_layer(&s);                              /* transmit the frame */
     timers[frame_nr] = start_timer(2000, Set_Timer_Out, TIMER_SINGLE_SHOT, NULL);         /* start the timer running */
+    sleep(3);
 }
 void protocol5(void)
 {
+    int counter = 0;
     seq_nr next_frame_to_send; /* MAX SEQ > 1; used for outbound stream */ // seral to send
     seq_nr frame_expected;                                                 /* next frame expected on inbound stream */
     frame r;                                                               /* scratch variable */
@@ -154,7 +157,16 @@ void protocol5(void)
     Connect_Master();
     while (1)
     {
+        
+        
         wait_for_event(&event); /* four possibilities: see event type above */
+        /*counter++;
+        if(counter == 4)
+        {
+            event = timeout;
+            counter = 0;
+        }*/
+
         switch (event)
         {
         case network_layer_ready: /* the network layer has a packet to send */
@@ -170,7 +182,6 @@ void protocol5(void)
             if (r.seq == frame_expected)
             {
                 /* Frames are accepted only in order. */
-                /***/sleep(3);
                 to_network_layer(&r.info); /* pass packet to network layer */
                 inc(frame_expected);       /* advance lower edge of receiver’s window */
             }
@@ -191,6 +202,7 @@ void protocol5(void)
         case cksum_err:
             break;                             /* just ignore bad frames */
         case timeout:                          /* trouble; retransmit all outstanding frames */
+            printf("/******************************TimeOut**************************************/\n");
             next_frame_to_send = ack_expected; /* start retransmitting here */
             for (i = 1; i <= nbuffered; i++)
             {
