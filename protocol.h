@@ -5,11 +5,8 @@
 #include <limits.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <sys/socket.h>
-#include <stdlib.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
@@ -17,9 +14,6 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 #define MAX_PKT 8 /* determines packet size in bytes */
 #define PORT 9002
@@ -102,7 +96,7 @@ void disable_network_layer(void);
 
 /* Macro inc is expanded in -line : increment k circularly.*/
 #define inc(k)       \
-    if (k < MAX_SEQ) \
+    if (k < MAX_SEQ-1) \
         k = k + 1;   \
     else             \
         k = 0

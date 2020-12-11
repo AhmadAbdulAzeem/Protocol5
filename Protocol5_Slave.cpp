@@ -3,11 +3,12 @@
 
 bool NetworkLayer = false;
 bool TimeOutFlag = 0;
+bool flag = true;
+
 packet NetworkLayer_Buffer[8];
+seq_nr ack_expected; /* oldest frame as yet unacknowledged */ // serial to recieve
 unsigned int client_socket;
 unsigned int server_socket;
-/* oldest frame as yet unacknowledged */
-seq_nr ack_expected;
 
 /* Ids of timers */
 size_t timers[MAX_SEQ] = {0};
@@ -15,23 +16,20 @@ size_t timers[MAX_SEQ] = {0};
 /* Handler of timer */
 void Set_Timer_Out(size_t timer_id, void *user_data)
 {
-    printf("**Time Out**\nRetransmitting The Frames Again......\n");
     TimeOutFlag = 1;
 }
-void Connect_Master(void)
+void Connect_Slave(void)
 {
-    printf("Master Waiting\n");
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    client_socket = socket(AF_INET, SOCK_STREAM, 0);
     struct sockaddr_in address;
     address.sin_family = AF_INET;
     address.sin_addr.s_addr = inet_addr("192.168.1.9");
     address.sin_port = htons(PORT);
-    bind(server_socket, (struct sockaddr *)&address, sizeof(address));
-    listen(server_socket, 1);
-    client_socket = accept(server_socket, NULL, NULL);
-    printf("Master connected\n");
+    printf("Waiting for Connection...\n");
+    while (connect(client_socket, (struct sockaddr *)&address, sizeof(address)))
+        ;
+    printf("Slave Connected\n");
 }
-
 /* Wait for an event to happen; return its type in event. */
 void wait_for_event(event_type *event)
 {
@@ -42,7 +40,6 @@ void wait_for_event(event_type *event)
     else
         *event = frame_arrival;
 }
-
 /* Fetch a packet from the network layer for transmission on the channel. */
 void from_network_layer(packet *p)
 {
@@ -69,25 +66,34 @@ void from_physical_layer(frame *r)
     read(client_socket, r, sizeof(frame));
     printf("Frame Recieved \n");
     printf("seq = %d   ack = %d\n", r->seq, r->ack);
-    printf("Info is : ");
+    printf("info is : ");
     for (int i = 0; i < 8; i++)
+    {
         printf("%d  ", r->info.data[i]);
+    }
     printf("\n");
     printf("*****************************************\n");
 }
 /* Pass the frame to the physical_layer for transmission. */
 void to_physical_layer(frame *s)
 {
-    sleep(2);
+    if (flag == true)
+    {
+        flag = 0;
+        sleep(5);
+    }
     write(client_socket, s, sizeof(frame));
-    printf("Frame Sent\n");
+    printf("Frame Sent \n");
     printf("seq = %d   ack = %d\n", s->seq, s->ack);
     printf("Info is : ");
     for (int i = 0; i < 8; i++)
+    {
         printf("%d  ", s->info.data[i]);
+    }
     printf("\n");
     printf("*****************************************\n");
 }
+
 /* Allow the network layer to cause a network layer ready event.*/
 void enable_network_layer(void)
 {
@@ -100,7 +106,7 @@ void disable_network_layer(void)
 }
 static bool between(seq_nr a, seq_nr b, seq_nr c)
 {
-    /* Return true if a <=b < c circularly abc bca cab ; false otherwise. */
+    /* Return true if a <=b < c circularly; false otherwise. */
     if (((a <= b) && (b < c)) || ((c < a) && (a <= b)) || ((b < c) && (c < a)))
         return (true);
     else
@@ -108,9 +114,7 @@ static bool between(seq_nr a, seq_nr b, seq_nr c)
 }
 static void send_data(seq_nr frame_nr, seq_nr frame_expected, packet buffer[])
 {
-
     /* Construct and send a data frame. */
-    static int c = 0;
     frame s;                                                                      /* scratch variable */
     s.info = buffer[frame_nr];                                                    /* insert packet into frame */
     s.seq = frame_nr;                                                             /* insert sequence number into frame */
@@ -127,12 +131,11 @@ void protocol5(void)
     seq_nr nbuffered;                                                      /* number of output buffers currently in use */
     seq_nr i;                                                              /* used to index into the buffer array */
     event_type event;
-    enable_network_layer(); /* allow network layer ready events */
     ack_expected = 0;       /* next ack expected inbound */
     next_frame_to_send = 0; /* next frame going out */
     frame_expected = 0;     /* number of frame expected inbound */
     nbuffered = 0;          /* initially no packets are buffered */
-    Connect_Master();
+    Connect_Slave();
     while (1)
     {
         wait_for_event(&event); /* four possibilities: see event type above */
@@ -167,9 +170,8 @@ void protocol5(void)
                 enable_network_layer();
             break;
         case cksum_err:
-            break;    /* just ignore bad frames */
-        case timeout: /* trouble; retransmit all outstanding frames */
-            printf("**Time Out**\nRetransmitting The Frames Again......\n");
+            break;                             /* just ignore bad frames */
+        case timeout:                          /* trouble; retransmit all outstanding frames */
             next_frame_to_send = ack_expected; /* start retransmitting here */
             for (i = 1; i <= nbuffered; i++)
             {
